@@ -2,6 +2,7 @@ from groq import Groq
 from dotenv import load_dotenv
 import os
 from elevenlabs.client import ElevenLabs
+from pathlib import Path
 
 
 load_dotenv()
@@ -97,14 +98,18 @@ def generate_podcast_script(topic, participants=1, duration=5, notes=""):
         print("\nNie udało się wygenerować żadnej sensownej odpowiedzi.")
         return None
 
-client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
+clienteleven = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
+
+clienteleven = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 
 def text_to_audio(text, n, voice_id):
+    files_dir = Path(__file__).resolve().parent.parent / "files"
+    files_dir.mkdir(parents=True, exist_ok=True)
 
     output_file = f"podcast_output_{n}.mp3"
-    output_path = f"../files/{output_file}"
+    output_path = files_dir / output_file
 
-    audio = client.text_to_speech.convert(
+    audio = clienteleven.text_to_speech.convert(
         text=text,
         voice_id=voice_id,
         model_id="eleven_multilingual_v2",
@@ -112,7 +117,8 @@ def text_to_audio(text, n, voice_id):
     )
 
     with open(output_path, "wb") as f:
-            f.write(audio)
+        for chunk in audio:
+            f.write(chunk)
 
     print(f"✅ Audio zapisane jako: {output_file}")
 
