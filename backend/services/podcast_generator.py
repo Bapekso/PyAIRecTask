@@ -100,8 +100,6 @@ def generate_podcast_script(topic, participants=1, duration=5, notes=""):
 
 clienteleven = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 
-clienteleven = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
-
 def text_to_audio(text, n, voice_id):
     files_dir = Path(__file__).resolve().parent.parent / "files"
     files_dir.mkdir(parents=True, exist_ok=True)
