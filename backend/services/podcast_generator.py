@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 from elevenlabs.client import ElevenLabs
 from pathlib import Path
-
+from pydub import AudioSegment
 
 load_dotenv()
 
@@ -120,7 +120,19 @@ def text_to_audio(text, n, voice_id):
 
     print(f"✅ Audio zapisane jako: {output_file}")
 
-    
+def join_mp3(folder_path):
+    files = [f for f in os.listdir(folder_path) if f.lower().endswith(".mp3")]
+    files.sort()
+    output_path = os.path.join(folder_path, "join.mp3")
+
+    with open(output_path, "wb") as outfile:
+        for f in files:
+            with open(os.path.join(folder_path, f), "rb") as infile:
+                outfile.write(infile.read())
+
+    print(f"✅ Zakończono! Plik zapisano jako '{output_path}'")
+
+
 
 
 
