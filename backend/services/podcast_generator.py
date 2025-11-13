@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 import os
 from elevenlabs.client import ElevenLabs
 from pathlib import Path
-from pydub import AudioSegment
 
 load_dotenv()
 
@@ -120,7 +119,7 @@ def text_to_audio(text, n, voice_id):
 
     print(f"✅ Audio zapisane jako: {output_file}")
 
-def join_mp3(folder_path):
+def join_mp3(folder_path=Path(__file__).resolve().parent.parent / "files"):
     files = [f for f in os.listdir(folder_path) if f.lower().endswith(".mp3")]
     files.sort()
     output_path = os.path.join(folder_path, "join.mp3")
@@ -131,6 +130,22 @@ def join_mp3(folder_path):
                 outfile.write(infile.read())
 
     print(f"✅ Zakończono! Plik zapisano jako '{output_path}'")
+
+
+def clean_mp3_folder(folder_path=Path(__file__).resolve().parent.parent / "files"):
+    folder = folder_path
+    
+    if not folder.exists() or not folder.is_dir():
+        print(f"❌ Folder '{folder}' nie istnieje!")
+        return
+
+    files_deleted = 0
+    for file in folder.iterdir():
+        if file.is_file() and file.suffix.lower() == ".mp3":
+            file.unlink()  # usuwa plik
+            files_deleted += 1
+
+    print(f"✅ Usunięto {files_deleted} plików MP3 z folderu '{folder}'")
 
 
 

@@ -2,7 +2,7 @@ import json
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from .models.CreatePodcastRequest import CreatePodcastRequest
-from services.podcast_generator import generate_podcast_script, text_to_audio, join_mp3
+from services.podcast_generator import generate_podcast_script, text_to_audio, join_mp3, clean_mp3_folder
 from pathlib import Path
 
 
@@ -11,6 +11,7 @@ router = APIRouter()
 @router.post("/generate_podcast/", response_class=JSONResponse)
 async def generate_podcast(createPodcastRequest: CreatePodcastRequest):
     try:
+        clean_mp3_folder()
         script = generate_podcast_script(
             topic=createPodcastRequest.podcastTitle,
             participants=createPodcastRequest.personNum,
@@ -31,7 +32,8 @@ async def generate_podcast(createPodcastRequest: CreatePodcastRequest):
                 text_to_convert = content['line']
                 text_to_audio(text_to_convert, n, voice_id="XrExE9yKIg1WjnnlVkGX")
 
-        join_mp3(folder_path=Path(__file__).resolve().parent.parent / "files")
+        join_mp3()
+        
         
         return {
             "message": "Podcast generated successfully",
