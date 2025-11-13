@@ -1,43 +1,55 @@
+version: "3.9"
+
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: backend
+    restart: always
+    env_file:
+      - ./backend/.env
     volumes:
       - ./backend:/app
     networks:
       - app-network
-    restart: always
     ports:
-      - "8000:8000"
-    environment:
-      DATABASE_URL: postgres://postgres:mypassword@db:5432/reqt_db
-      UVICORN_PORT: 8000
-
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "5173:5173"
-  #   networks:
-  #     - app-network
-  #   depends_on:
-  #     - cbackend
+      - "${BACKEND_PORT}:8000"
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - db
 
   db:
     image: postgres:16
+    container_name: pardb
+    restart: always
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: reqt_db
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-network
+
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: frontend
+  #   env_file:
+  #     - ./backend/.env
+  #   ports:
+  #     - "${FRONTEND_PORT}:5173"
+  #   networks:
+  #     - app-network
+  #   depends_on:
+  #     - backend
 
 networks:
   app-network:
