@@ -1,6 +1,8 @@
 from groq import Groq
 from dotenv import load_dotenv
 import os
+from elevenlabs.client import ElevenLabs
+
 
 load_dotenv()
 
@@ -18,28 +20,28 @@ def generate_podcast_prompt(topic, participants=1, duration=5, notes="", feedbac
         persons = persons.rstrip(',')
 
     prompt = f"""
-You are a professional podcast script generator.
+        You are a professional podcast script generator.
 
-INPUT:
-- Topic: {topic}
-- Number of participants: {participants}
-- Expected duration in minutes: {duration}
-- General script notes: {notes}
+        INPUT:
+        - Topic: {topic}
+        - Number of participants: {participants}
+        - Expected duration in minutes: {duration}
+        - General script notes: {notes}
 
-RULES:
-1️⃣ Generate dialogue and explanatory notes in Introduction, Main Content, and Conclusion.
-2️⃣ Return JSON only if possible, following this structure:
-{{
-  "Introduction": {{"Host": {{"line": "..."}}}},
-  "Main Content": {{
-      "Host": {{"line": "..."}},{persons}
-  }},
-  "Conclusion": {{"Host": {{"line": "..."}}}}
-}}
-3️⃣ Word count enforcement: the total dialogue and notes should be approximately {required_words} words (130 words per minute of expected duration).
-4️⃣ Make sure each section (Introduction, Main Content, Conclusion) has meaningful content and contributes to the total word count.
-{feedback}
-"""
+        RULES:
+        1️⃣ Generate dialogue and explanatory notes in Introduction, Main Content, and Conclusion.
+        2️⃣ Return JSON only if possible, following this structure:
+        {{
+        "Introduction": {{"Host": {{"line": "..."}}}},
+        "Main Content": {{
+            "Host": {{"line": "..."}},{persons}
+        }},
+        "Conclusion": {{"Host": {{"line": "..."}}}}
+        }}
+        3️⃣ Word count enforcement: the total dialogue and notes should be approximately {required_words} words (130 words per minute of expected duration).
+        4️⃣ Make sure each section (Introduction, Main Content, Conclusion) has meaningful content and contributes to the total word count.
+        {feedback}
+    """
     return prompt
 
 def count_words(text):
@@ -94,6 +96,32 @@ def generate_podcast_script(topic, participants=1, duration=5, notes=""):
     else:
         print("\nNie udało się wygenerować żadnej sensownej odpowiedzi.")
         return None
+
+client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
+
+def text_to_audio(text, n, voice_id):
+
+    output_file = f"podcast_output_{n}.mp3"
+    output_path = f"../files/{output_file}"
+
+    audio = client.text_to_speech.convert(
+        text=text,
+        voice_id=voice_id,
+        model_id="eleven_multilingual_v2",
+        output_format="mp3_44100_128"
+    )
+
+    with open(output_path, "wb") as f:
+            f.write(audio)
+
+    print(f"✅ Audio zapisane jako: {output_file}")
+
+    
+
+
+
+
+    
 
 
 if __name__ == "__main__":
