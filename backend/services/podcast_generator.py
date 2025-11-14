@@ -100,7 +100,7 @@ def generate_podcast_script(topic, participants=1, duration=5, notes=""):
 clienteleven = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 
 def text_to_audio(text, n, voice_id):
-    files_dir = Path(__file__).resolve().parent.parent / "files"
+    files_dir = Path(__file__).resolve().parent.parent / "mpFiles"
     files_dir.mkdir(parents=True, exist_ok=True)
 
     output_file = f"podcast_output_{n}.mp3"
@@ -119,7 +119,7 @@ def text_to_audio(text, n, voice_id):
 
     print(f"✅ Audio zapisane jako: {output_file}")
 
-def join_mp3(folder_path=Path(__file__).resolve().parent.parent / "files"):
+def join_mp3(folder_path=Path(__file__).resolve().parent.parent / "mpFiles"):
     files = [f for f in os.listdir(folder_path) if f.lower().endswith(".mp3")]
     files.sort()
     output_path = os.path.join(folder_path, "join.mp3")
@@ -132,7 +132,7 @@ def join_mp3(folder_path=Path(__file__).resolve().parent.parent / "files"):
     print(f"✅ Zakończono! Plik zapisano jako '{output_path}'")
 
 
-def clean_mp3_folder(folder_path=Path(__file__).resolve().parent.parent / "files"):
+def clean_mp3_folder(folder_path=Path(__file__).resolve().parent.parent / "mpFiles"):
     folder = folder_path
     
     if not folder.exists() or not folder.is_dir():
