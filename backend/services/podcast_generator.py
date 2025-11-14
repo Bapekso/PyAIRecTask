@@ -129,14 +129,14 @@ def join_mp3(folder_path=Path(__file__).resolve().parent.parent / "mpFiles"):
             with open(os.path.join(folder_path, f), "rb") as infile:
                 outfile.write(infile.read())
 
-    print(f"✅ Zakończono! Plik zapisano jako '{output_path}'")
+    print(f"Zakończono! Plik zapisano jako '{output_path}'")
 
 
 def clean_mp3_folder(folder_path=Path(__file__).resolve().parent.parent / "mpFiles"):
     folder = folder_path
     
     if not folder.exists() or not folder.is_dir():
-        print(f"❌ Folder '{folder}' nie istnieje!")
+        print(f"Folder '{folder}' nie istnieje!")
         return
 
     files_deleted = 0
