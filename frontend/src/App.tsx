@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-// Pełna lista głosów i ich ID
 const voicesList: Record<string, string> = {
   Clyde: "2EiwWnXFnvU5JabPnv8n",
   Roger: "CwhRBWXzGAHq8TQ4Fs17",
@@ -24,157 +23,153 @@ const voicesList: Record<string, string> = {
   Bill: "pqHfZKP75CvOlQylNhV4",
 };
 
-function App() {
-  const [membersCount, setMembersCount] = useState(1);
-  const [minutesNum, setMinutesNum] = useState(5);
+interface Participant {
+  name: string;
+  id: string;
+}
+
+export default function App() {
   const [podcastTitle, setPodcastTitle] = useState("");
   const [podcastNotes, setPodcastNotes] = useState("");
-  const [selectedVoices, setSelectedVoices] = useState<string[]>([""]);
-  const [podcastGenerated, setPodcastGenerated] = useState(false);
+  const [minutesNum, setMinutesNum] = useState(1);
+  const [personNum, setPersonNum] = useState(1);
+  const [participants, setParticipants] = useState<Participant[]>(
+    Array(4).fill({ name: "", id: "" })
+  );
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
-
-  const handleVoiceSelect = (index: number, value: string) => {
-    const updated = [...selectedVoices];
-    updated[index] = value;
-    setSelectedVoices(updated);
+  const handleParticipantChange = (index: number, name: string) => {
+    const id = voicesList[name] || "";
+    const updated = [...participants];
+    updated[index] = { name, id };
+    setParticipants(updated);
   };
 
-  const handleMinutesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMinutesNum(Number(e.target.value));
-  };
-
-  const handleGeneratePodcast = async () => {
-    if (!podcastTitle.trim()) return alert("Podaj tytuł podcastu!");
-    if (!podcastNotes.trim()) return alert("Podaj notatki / treść podcastu!");
-
-    const participants = selectedVoices
-      .filter(Boolean)
-      .map(name => ({ name, id: voicesList[name] }));
+  const handleSubmit = async () => {
+    setLoading(true);
+    setAudioUrl(null); // reset previous audio
 
     const payload = {
-      personNum: membersCount,
+      personNum,
       minutesNum,
       podcastTitle,
       podcastNotes,
-      participants,
+      participants: participants.slice(0, personNum),
     };
 
     try {
-      const response = await fetch(`${BACKEND_URL}/generate_podcast/`, {
+      // 1. Wysyłamy request do wygenerowania podcastu
+      const response = await fetch("http://localhost:8000/generate_podcast/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        return alert(`Błąd backendu: ${error.detail || response.statusText}`);
+        throw new Error("Failed to generate podcast");
       }
 
-      await response.json();
-      console.log("Podcast wygenerowany pomyślnie!");
-      setPodcastGenerated(true);
-
+      // 2. Po wygenerowaniu pliku ustawiamy URL do odtwarzania/pobrania
+      setAudioUrl("http://localhost:8000/download_podcast/");
+      alert("Podcast generated successfully!");
     } catch (err) {
       console.error(err);
-      alert("Błąd sieci podczas wysyłania danych");
+      alert("Error generating podcast.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h1>Generator podcastu</h1>
+    <div style={{ maxWidth: 600, margin: "0 auto", padding: 20 }}>
+      <h1>Create Podcast</h1>
 
-      <label>
-        Tytuł podcastu:
+      <div>
+        <label>Tytuł podcastu:</label>
         <input
           type="text"
           value={podcastTitle}
           onChange={(e) => setPodcastTitle(e.target.value)}
-          style={{ width: "100%", margin: "0.5rem 0" }}
+          style={{ width: "100%", marginBottom: 10 }}
         />
-      </label>
+      </div>
 
-      <label>
-        Notatki / treść podcastu:
+      <div>
+        <label>Notatki:</label>
         <textarea
           value={podcastNotes}
           onChange={(e) => setPodcastNotes(e.target.value)}
-          rows={8}
-          style={{ width: "100%", margin: "0.5rem 0" }}
+          rows={5}
+          style={{ width: "100%", marginBottom: 10 }}
         />
-      </label>
+      </div>
 
-      <label>
-        Liczba uczestników:
+      <div>
+        <label>Czas podcastu (minuty):</label>
         <select
-          value={membersCount}
-          onChange={(e) => {
-            const value = Number(e.target.value);
-            setMembersCount(value);
-            setSelectedVoices(prev => {
-              const copy = [...prev];
-              copy.length = value;
-              return copy.map(v => v || "");
-            });
-          }}
-          style={{ margin: "0.5rem 0" }}
-        >
-          {[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}</option>)}
-        </select>
-      </label>
-
-      <label>
-        Czas trwania (minuty):
-        <input
-          type="number"
           value={minutesNum}
-          onChange={handleMinutesChange}
-          min={1}
-          max={120}
-          style={{ margin: "0.5rem 0" }}
-        />
-      </label>
+          onChange={(e) => setMinutesNum(Number(e.target.value))}
+          style={{ width: "100%", marginBottom: 10 }}
+        >
+          {Array.from({ length: 15 }, (_, i) => i + 1).map((min) => (
+            <option key={min} value={min}>
+              {min}
+            </option>
+          ))}
+        </select>
+      </div>
 
-      {Array.from({ length: membersCount }).map((_, idx) => (
-        <div key={idx} style={{ marginBottom: "1rem" }}>
-          <h3>Uczestnik {idx + 1}</h3>
+      <div>
+        <label>Liczba uczestników:</label>
+        <select
+          value={personNum}
+          onChange={(e) => setPersonNum(Number(e.target.value))}
+          style={{ width: "100%", marginBottom: 10 }}
+        >
+          {Array.from({ length: 4 }, (_, i) => i + 1).map((num) => (
+            <option key={num} value={num}>
+              {num}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {[...Array(personNum)].map((_, i) => (
+        <div key={i}>
+          <label>Uczestnik {i + 1}:</label>
           <select
-            value={selectedVoices[idx] || ""}
-            onChange={(e) => handleVoiceSelect(idx, e.target.value)}
+            value={participants[i].name}
+            onChange={(e) => handleParticipantChange(i, e.target.value)}
+            style={{ width: "100%", marginBottom: 10 }}
           >
-            <option value="">-- wybierz głos --</option>
-            {Object.keys(voicesList).map(v => <option key={v} value={v}>{v}</option>)}
+            <option value="">-- Wybierz imię --</option>
+            {Object.keys(voicesList).map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
           </select>
         </div>
       ))}
 
       <button
-        onClick={handleGeneratePodcast}
-        style={{ marginTop: "1rem", padding: "0.5rem 1rem" }}
+        onClick={handleSubmit}
+        style={{ padding: "10px 20px", marginTop: 20 }}
+        disabled={loading}
       >
-        Generuj podcast
+        {loading ? "Generating..." : "Wyślij"}
       </button>
 
-      {podcastGenerated && (
-        <div style={{ marginTop: "1rem" }}>
-          <audio
-            controls
-            src={`${BACKEND_URL}/download_podcast/`}
-            style={{ display: "block", marginBottom: "0.5rem" }}
-          />
+      {audioUrl && (
+        <div style={{ marginTop: 20 }}>
+          <h3>Odsłuchaj podcast:</h3>
+          <audio controls src={audioUrl}></audio>
+          <br />
           <a
-            href={`${BACKEND_URL}/download_podcast/`}
+            href={audioUrl}
             download="podcast.mp3"
-            style={{
-              display: "inline-block",
-              padding: "0.5rem 1rem",
-              backgroundColor: "#4CAF50",
-              color: "white",
-              textDecoration: "none",
-              borderRadius: "4px",
-            }}
+            style={{ display: "inline-block", marginTop: 10 }}
           >
             Pobierz podcast
           </a>
@@ -183,5 +178,3 @@ function App() {
     </div>
   );
 }
-
-export default App;

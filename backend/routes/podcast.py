@@ -58,8 +58,6 @@ async def generate_podcast(createPodcastRequest: CreatePodcastRequest):
     
 @router.get("/download_podcast/")
 async def download_podcast():
-    mp3_path = Path("mpFiles/join.mp3")
-    if not mp3_path.exists():
-        raise HTTPException(status_code=404, detail="Podcast not found")
-    return FileResponse(mp3_path, media_type="audio/mpeg", filename="podcast.mp3")
+    file_path = Path("mpFiles/join.mp3")
+    return FileResponse(file_path, media_type="audio/mpeg", filename="podcast.mp3")
 
