@@ -36,6 +36,8 @@ export default function App() {
   const [participants, setParticipants] = useState<Participant[]>(
     Array(4).fill({ name: "", id: "" })
   );
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleParticipantChange = (index: number, name: string) => {
     const id = voicesList[name] || "";
@@ -45,6 +47,9 @@ export default function App() {
   };
 
   const handleSubmit = async () => {
+    setLoading(true);
+    setAudioUrl(null); // reset previous audio
+
     const payload = {
       personNum,
       minutesNum,
@@ -54,18 +59,25 @@ export default function App() {
     };
 
     try {
+      // 1. Wysyłamy request do wygenerowania podcastu
       const response = await fetch("http://localhost:8000/generate_podcast/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
-      console.log("Response:", data);
-      alert("Podcast sent successfully!");
+      if (!response.ok) {
+        throw new Error("Failed to generate podcast");
+      }
+
+      // 2. Po wygenerowaniu pliku ustawiamy URL do odtwarzania/pobrania
+      setAudioUrl("http://localhost:8000/download_podcast/");
+      alert("Podcast generated successfully!");
     } catch (err) {
       console.error(err);
-      alert("Error sending podcast.");
+      alert("Error generating podcast.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -144,9 +156,25 @@ export default function App() {
       <button
         onClick={handleSubmit}
         style={{ padding: "10px 20px", marginTop: 20 }}
+        disabled={loading}
       >
-        Wyślij
+        {loading ? "Generating..." : "Wyślij"}
       </button>
+
+      {audioUrl && (
+        <div style={{ marginTop: 20 }}>
+          <h3>Odsłuchaj podcast:</h3>
+          <audio controls src={audioUrl}></audio>
+          <br />
+          <a
+            href={audioUrl}
+            download="podcast.mp3"
+            style={{ display: "inline-block", marginTop: 10 }}
+          >
+            Pobierz podcast
+          </a>
+        </div>
+      )}
     </div>
   );
 }
